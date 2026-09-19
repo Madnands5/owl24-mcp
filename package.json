@@ -1,0 +1,44 @@
+{
+  "name": "owl24-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for owl24 — gives Claude Code, Cursor, or any MCP client direct access to your error queue: list what's broken, claim it, read the trace, and resolve it, without leaving your editor.",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "owl24-mcp": "index.js"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "observability",
+    "opentelemetry",
+    "coding-agent",
+    "ai-agent",
+    "claude-code",
+    "cursor",
+    "owl24"
+  ],
+  "author": "Madnands5",
+  "license": "MIT",
+  "homepage": "https://owl24.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Madnands5/owl24-mcp.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.5"
+  }
+}
