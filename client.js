@@ -112,12 +112,11 @@ export function createClient({ apiKey, baseUrl }) {
     /**
      * Claims one queue item (by its numeric id, from listQueue's `id`
      * field). This is what triggers billing: the item's first-ever
-     * successful claim is billed once, immediately (see owl24 Pricing) - a
-     * later resolveError or releaseError never bills it again. 409 means
-     * someone/something else already holds it, 402 means the project's
-     * monthly cap is used up - both surfaced as an Owl24ApiError, not
-     * swallowed, so the caller can decide to move on rather than treat
-     * either as fatal.
+     * successful claim is billed once, immediately (see owl24 Pricing), no
+     * monthly cap - a later resolveError or releaseError never bills it
+     * again. 409 means someone/something else already holds it - surfaced
+     * as an Owl24ApiError, not swallowed, so the caller can decide to move
+     * on to the next item rather than treat it as fatal.
      */
     claimError: async ({ id, claimedBy, serviceName }) => {
       if (!Number.isInteger(id)) throw new Error('id must be the queue item\'s numeric id');

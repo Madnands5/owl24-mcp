@@ -50,7 +50,7 @@ const toError = (err) => ({
   }],
 });
 
-const server = new McpServer({ name: 'owl24-mcp', version: '0.2.0' });
+const server = new McpServer({ name: 'owl24-mcp', version: '0.2.1' });
 
 server.registerTool(
   'list_errors',
@@ -113,7 +113,7 @@ server.registerTool(
   'claim_error',
   {
     title: 'Claim a queue item',
-    description: 'Claims one queue item by its numeric id (from list_queue), so no other agent works it at the same time. IMPORTANT: this is what triggers billing (see the owl24 Pricing page) - the first time an item is ever claimed, it\'s billed once, immediately, up to a monthly cap; resolving or releasing it afterward never bills it again. Returns a 409-shaped error if something else already holds the claim within its TTL - that is expected and not fatal; move on to the next item rather than treating it as a hard failure. Returns a 402-shaped error if the project\'s monthly cap is already used up.',
+    description: 'Claims one queue item by its numeric id (from list_queue), so no other agent works it at the same time. IMPORTANT: this is what triggers billing (see the owl24 Pricing page) - the first time an item is ever claimed, it\'s billed once, immediately, with no monthly cap; resolving or releasing it afterward never bills it again. Returns a 409-shaped error if something else already holds the claim within its TTL - that is expected and not fatal; move on to the next item rather than treating it as a hard failure.',
     inputSchema: {
       // Coerced, not a plain z.number(): dashboard-api.js's own JSON response
       // (list_queue's own `id` field) comes back as a string - Postgres
