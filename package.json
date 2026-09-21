@@ -1,6 +1,6 @@
 {
   "name": "owl24-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for owl24 — gives Claude Code, Cursor, or any MCP client direct access to your error queue: list what's broken, claim it, read the trace, and resolve it, without leaving your editor.",
   "type": "module",
   "main": "index.js",

@@ -14,9 +14,14 @@ This doesn't replace the [REST-plus-AGENTS.md](https://owl24.dev/docs#agent-inte
 | `claim_error` | Claims a queue item so nothing else works it at the same time |
 | `get_trace` | The actual evidence — spans, logs, stack trace for one trace |
 | `get_rca_report` | Checks for an *existing* cached AI root-cause report (read-only) |
-| `resolve_error` | Marks a queue item resolved, with a note naming the PR and fingerprint |
+| `resolve_error` | Marks a queue item resolved, with a note naming the PR and fingerprint — **this is what's billed** (see below) |
+| `count_open_items` | Cheap poll target — just the open-item count, no full list fetch |
+| `release_error` | Gives up on a claimed item **for free**, without resolving it |
+| `extend_claim` | Pushes a claim's expiry out if you're still actively working it |
 
 **What it deliberately can't do:** run a new AI Root-Cause Analysis. That's a separate, paid, human action from the owl24 dashboard — this server never spends AI-RCA credit on its own initiative. `get_rca_report` only reads a report that already exists; if one doesn't, investigate from `get_trace`'s data instead, the same way [AGENTS.md](https://owl24.dev/owl24-AGENTS.md) already tells an agent to.
+
+**Billing:** listing, queuing, claiming, releasing, and extending are all free. A small per-item charge (current rate on [Pricing](https://owl24.dev/#pricing)) applies only when `resolve_error` marks something resolved, up to a monthly cap you control from the project's Agent Access panel. If you can't actually confirm a fix, call `release_error` instead of `resolve_error` — it's the free exit, not a lesser version of resolving.
 
 We don't build, run, or host your agent. This server runs locally, on your machine, using your own project API key — same trust model as the REST workflow it wraps.
 

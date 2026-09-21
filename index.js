@@ -50,7 +50,7 @@ const toError = (err) => ({
   }],
 });
 
-const server = new McpServer({ name: 'owl24-mcp', version: '0.1.0' });
+const server = new McpServer({ name: 'owl24-mcp', version: '0.2.0' });
 
 server.registerTool(
   'list_errors',
@@ -176,10 +176,8 @@ server.registerTool(
   'resolve_error',
   {
     title: 'Mark a queue item resolved',
-    description: 'Resolves a queue item once you have opened a pull request for it. Always include the PR link and the fingerprint you believe you fixed in resolutionNote (e.g. "Opened myorg/myrepo#123 - fixes fingerprint <fingerprint>") - that is what lets a later check confirm the error actually stopped recurring. Resolving is a permanent record, not a delete, and does not require you to be the one who claimed it.',
+    description: 'Resolves a queue item once you have opened a pull request for it. Always include the PR link and the fingerprint you believe you fixed in resolutionNote (e.g. "Opened myorg/myrepo#123 - fixes fingerprint <fingerprint>") - that is what lets a later check confirm the error actually stopped recurring. Resolving is a permanent record, not a delete, and does not require you to be the one who claimed it. IMPORTANT: resolving is what triggers billing on the account\'s wallet (see the owl24 Pricing page) - only call this once you have real evidence the fix works, not as a way to give up on an item. If you can\'t actually confirm the cause, call release_error instead - it\'s free.',
     inputSchema: {
-      // Coerced - see claim_error's own comment on why (list_queue's id
-      // comes back as a string).
       id: z.coerce.number().int().describe("The queue item's numeric id."),
       resolutionNote: z.string().max(2000).optional().describe('What you did - should name the PR and the fingerprint fixed.'),
       serviceName: z.string().optional().describe('If set, only resolves if the item belongs to this service.'),
@@ -188,6 +186,64 @@ server.registerTool(
   async (args) => {
     try {
       return toResult(await client.resolveError(args));
+    } catch (err) {
+      return toError(err);
+    }
+  }
+);
+
+server.registerTool(
+  'count_open_items',
+  {
+    title: 'Cheap poll: how many open items are there',
+    description: 'Returns just the count of open (unresolved) queue items, without the cost of fetching the full list - call this on every poll and only call list_queue when the count is greater than 0. Matches GET /api/v1/agent-access/count.',
+    inputSchema: {
+      serviceName: z.string().optional().describe('Exact service name to filter to. Omit to count across every service.'),
+    },
+  },
+  async (args) => {
+    try {
+      return toResult(await client.countOpenItems(args));
+    } catch (err) {
+      return toError(err);
+    }
+  }
+);
+
+server.registerTool(
+  'release_error',
+  {
+    title: 'Give up on a claimed item, for free',
+    description: 'Releases a claimed item back to open WITHOUT resolving it - this is the free exit when you can\'t actually find or confirm the cause. Unlike resolve_error, this is never billed. `reason` is required and is kept in the item\'s attempt history so the next claimant (you next time, or a human) knows what was already ruled out. Prefer this over resolve_error when you are not actually confident in the fix.',
+    inputSchema: {
+      id: z.coerce.number().int().describe("The queue item's numeric id."),
+      reason: z.string().min(1).max(2000).describe('Required. What you ruled out and why you\'re giving up on this attempt.'),
+      serviceName: z.string().optional().describe('If set, only releases if the item belongs to this service.'),
+    },
+  },
+  async (args) => {
+    try {
+      return toResult(await client.releaseError(args));
+    } catch (err) {
+      return toError(err);
+    }
+  }
+);
+
+server.registerTool(
+  'extend_claim',
+  {
+    title: 'Extend a claim before it expires',
+    description: 'Pushes a claim\'s expiry another claim-TTL window out. Use this if you\'re still actively working an item and getting close to claim_expires_at (from claim_error\'s or list_queue\'s response) - the alternative is racing the clock and risking another agent claiming it out from under you. Free, and does not affect billing either way.',
+    inputSchema: {
+      id: z.coerce.number().int().describe("The queue item's numeric id."),
+      claimedBy: z.string().optional().describe('Must match the identifier the claim was made with, if one was set.'),
+      serviceName: z.string().optional().describe('If set, only extends if the item belongs to this service.'),
+    },
+  },
+  async (args) => {
+    try {
+      return toResult(await client.extendClaim(args));
     } catch (err) {
       return toError(err);
     }

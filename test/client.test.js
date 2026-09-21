@@ -187,3 +187,62 @@ describe('resolveError', () => {
     assert.equal(body.resolutionNote, 'Opened org/repo#123 - fixes fingerprint abc');
   });
 });
+
+describe('countOpenItems', () => {
+  test('GET /api/v1/agent-access/count with no params when none given', async () => {
+    responder = async () => ({ status: 200, body: { count: 0 } });
+    const client = createClient({ apiKey: 'k' });
+    const result = await client.countOpenItems();
+    assert.equal(calls[0].url, 'https://api.owl24.dev/api/v1/agent-access/count');
+    assert.equal(calls[0].opts.method, 'GET');
+    assert.deepEqual(result, { count: 0 });
+  });
+
+  test('serializes serviceName as a query param', async () => {
+    const client = createClient({ apiKey: 'k' });
+    await client.countOpenItems({ serviceName: 'checkout-service' });
+    const url = new URL(calls[0].url);
+    assert.equal(url.searchParams.get('serviceName'), 'checkout-service');
+  });
+});
+
+describe('releaseError', () => {
+  test('POST /api/v1/agent-access/:id/release with the required reason', async () => {
+    const client = createClient({ apiKey: 'k' });
+    await client.releaseError({ id: 42, reason: 'Ruled out a null-pointer, could not confirm a cause.' });
+    assert.equal(calls[0].url, 'https://api.owl24.dev/api/v1/agent-access/42/release');
+    assert.equal(calls[0].opts.method, 'POST');
+    const body = JSON.parse(calls[0].opts.body);
+    assert.equal(body.reason, 'Ruled out a null-pointer, could not confirm a cause.');
+  });
+
+  test('rejects a missing reason before making a request - matches the server\'s own requirement', async () => {
+    const client = createClient({ apiKey: 'k' });
+    await assert.rejects(client.releaseError({ id: 42, reason: '' }), /reason is required/);
+    assert.equal(calls.length, 0);
+  });
+
+  test('rejects a non-integer id before making a request', async () => {
+    const client = createClient({ apiKey: 'k' });
+    await assert.rejects(client.releaseError({ id: 'forty-two', reason: 'why' }), /numeric id/);
+    assert.equal(calls.length, 0);
+  });
+});
+
+describe('extendClaim', () => {
+  test('POST /api/v1/agent-access/:id/extend with claimedBy and serviceName', async () => {
+    const client = createClient({ apiKey: 'k' });
+    await client.extendClaim({ id: 42, claimedBy: 'my-agent-v1', serviceName: 'checkout-service' });
+    assert.equal(calls[0].url, 'https://api.owl24.dev/api/v1/agent-access/42/extend');
+    assert.equal(calls[0].opts.method, 'POST');
+    const body = JSON.parse(calls[0].opts.body);
+    assert.equal(body.claimedBy, 'my-agent-v1');
+    assert.equal(body.serviceName, 'checkout-service');
+  });
+
+  test('rejects a non-integer id before making a request', async () => {
+    const client = createClient({ apiKey: 'k' });
+    await assert.rejects(client.extendClaim({ id: 'forty-two' }), /numeric id/);
+    assert.equal(calls.length, 0);
+  });
+});

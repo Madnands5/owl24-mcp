@@ -174,5 +174,49 @@ export function createClient({ apiKey, baseUrl }) {
         body: { resolutionNote, serviceName },
       });
     },
+
+    /**
+     * Cheap poll target - how many open (unclaimed-or-claimed, unresolved)
+     * items are waiting, without fetching the full list. Matches GET
+     * /api/v1/agent-access/count exactly - check this before listQueue on
+     * every poll, and skip the full fetch when count is 0.
+     */
+    countOpenItems: async ({ serviceName } = {}) => {
+      const params = new URLSearchParams();
+      if (serviceName) params.set('serviceName', serviceName);
+      const qs = params.toString();
+      return request(`/api/v1/agent-access/count${qs ? `?${qs}` : ''}`);
+    },
+
+    /**
+     * Releases a claimed item back to open WITHOUT resolving it - the free
+     * exit when an agent can't actually find or fix the cause. This is not
+     * billed the way resolveError can be; use this instead of resolving
+     * something you didn't actually fix, so the item's own billing status
+     * stays accurate for whoever claims it next. `reason` is required by
+     * the server and is recorded in attempt_history.
+     */
+    releaseError: async ({ id, reason, serviceName }) => {
+      if (!Number.isInteger(id)) throw new Error('id must be the queue item\'s numeric id');
+      if (!reason || !reason.trim()) throw new Error('reason is required - say what you ruled out and why you\'re giving up, so the next claimant does not repeat the same dead end.');
+      return request(`/api/v1/agent-access/${id}/release`, {
+        method: 'POST',
+        body: { reason, serviceName },
+      });
+    },
+
+    /**
+     * Pushes a claim's expiry another claim-TTL window out. Use this if
+     * you're still actively working an item and getting close to
+     * claim_expires_at - the alternative is racing the clock and risking
+     * another agent claiming it out from under you.
+     */
+    extendClaim: async ({ id, claimedBy, serviceName }) => {
+      if (!Number.isInteger(id)) throw new Error('id must be the queue item\'s numeric id');
+      return request(`/api/v1/agent-access/${id}/extend`, {
+        method: 'POST',
+        body: { claimedBy, serviceName },
+      });
+    },
   };
 }
