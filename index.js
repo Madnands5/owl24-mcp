@@ -113,7 +113,7 @@ server.registerTool(
   'claim_error',
   {
     title: 'Claim a queue item',
-    description: 'Claims one queue item by its numeric id (from list_queue), so no other agent works it at the same time. Returns a 409-shaped error if something else already holds the claim within its TTL - that is expected and not fatal; move on to the next item rather than treating it as a hard failure.',
+    description: 'Claims one queue item by its numeric id (from list_queue), so no other agent works it at the same time. IMPORTANT: this is what triggers billing (see the owl24 Pricing page) - the first time an item is ever claimed, it\'s billed once, immediately, up to a monthly cap; resolving or releasing it afterward never bills it again. Returns a 409-shaped error if something else already holds the claim within its TTL - that is expected and not fatal; move on to the next item rather than treating it as a hard failure. Returns a 402-shaped error if the project\'s monthly cap is already used up.',
     inputSchema: {
       // Coerced, not a plain z.number(): dashboard-api.js's own JSON response
       // (list_queue's own `id` field) comes back as a string - Postgres
@@ -176,7 +176,7 @@ server.registerTool(
   'resolve_error',
   {
     title: 'Mark a queue item resolved',
-    description: 'Resolves a queue item once you have opened a pull request for it. Always include the PR link and the fingerprint you believe you fixed in resolutionNote (e.g. "Opened myorg/myrepo#123 - fixes fingerprint <fingerprint>") - that is what lets a later check confirm the error actually stopped recurring. Resolving is a permanent record, not a delete, and does not require you to be the one who claimed it. IMPORTANT: resolving is what triggers billing on the account\'s wallet (see the owl24 Pricing page) - only call this once you have real evidence the fix works, not as a way to give up on an item. If you can\'t actually confirm the cause, call release_error instead - it\'s free.',
+    description: 'Resolves a queue item once you have opened a pull request for it. Always include the PR link and the fingerprint you believe you fixed in resolutionNote (e.g. "Opened myorg/myrepo#123 - fixes fingerprint <fingerprint>") - that is what lets a later check confirm the error actually stopped recurring. Resolving is a permanent record, not a delete, and does not require you to be the one who claimed it. This itself never triggers a charge - the one charge a hand-off can incur already happened when it was first claimed (see claim_error). Only call this once you have real evidence the fix works; if you can\'t actually confirm the cause, call release_error instead so the record stays accurate for whoever claims it next.',
     inputSchema: {
       id: z.coerce.number().int().describe("The queue item's numeric id."),
       resolutionNote: z.string().max(2000).optional().describe('What you did - should name the PR and the fingerprint fixed.'),
@@ -213,8 +213,8 @@ server.registerTool(
 server.registerTool(
   'release_error',
   {
-    title: 'Give up on a claimed item, for free',
-    description: 'Releases a claimed item back to open WITHOUT resolving it - this is the free exit when you can\'t actually find or confirm the cause. Unlike resolve_error, this is never billed. `reason` is required and is kept in the item\'s attempt history so the next claimant (you next time, or a human) knows what was already ruled out. Prefer this over resolve_error when you are not actually confident in the fix.',
+    title: 'Give up on a claimed item, without a fake resolution',
+    description: 'Releases a claimed item back to open WITHOUT resolving it - use this when you can\'t actually find or confirm the cause, instead of marking it resolved with a "couldn\'t fix" note. This never adds a new charge on top of the claim - if that claim was billable, releasing it doesn\'t refund the charge either, but re-claiming the same item later (by you or anyone else) is never billed again. `reason` is required and is kept in the item\'s attempt history so the next claimant knows what was already ruled out.',
     inputSchema: {
       id: z.coerce.number().int().describe("The queue item's numeric id."),
       reason: z.string().min(1).max(2000).describe('Required. What you ruled out and why you\'re giving up on this attempt.'),

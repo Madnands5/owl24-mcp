@@ -11,17 +11,17 @@ This doesn't replace the [REST-plus-AGENTS.md](https://owl24.dev/docs#agent-inte
 | `list_errors` | Deduplicated error groups — occurrence counts, first/last seen, queue state, whether an AI report already exists |
 | `queue_error` | Adds an error group to the agent-access queue (free, never calls AI) |
 | `list_queue` | Lists queue items — defaults to open/unclaimed |
-| `claim_error` | Claims a queue item so nothing else works it at the same time |
+| `claim_error` | Claims a queue item so nothing else works it at the same time — **this is what's billed, once** (see below) |
 | `get_trace` | The actual evidence — spans, logs, stack trace for one trace |
 | `get_rca_report` | Checks for an *existing* cached AI root-cause report (read-only) |
-| `resolve_error` | Marks a queue item resolved, with a note naming the PR and fingerprint — **this is what's billed** (see below) |
+| `resolve_error` | Marks a queue item resolved, with a note naming the PR and fingerprint — free, doesn't trigger any charge |
 | `count_open_items` | Cheap poll target — just the open-item count, no full list fetch |
-| `release_error` | Gives up on a claimed item **for free**, without resolving it |
+| `release_error` | Gives up on a claimed item without resolving it — doesn't add a new charge (a claim's charge, if any, already happened) |
 | `extend_claim` | Pushes a claim's expiry out if you're still actively working it |
 
 **What it deliberately can't do:** run a new AI Root-Cause Analysis. That's a separate, paid, human action from the owl24 dashboard — this server never spends AI-RCA credit on its own initiative. `get_rca_report` only reads a report that already exists; if one doesn't, investigate from `get_trace`'s data instead, the same way [AGENTS.md](https://owl24.dev/owl24-AGENTS.md) already tells an agent to.
 
-**Billing:** listing, queuing, claiming, releasing, and extending are all free. A small per-item charge (current rate on [Pricing](https://owl24.dev/#pricing)) applies only when `resolve_error` marks something resolved, up to a monthly cap you control from the project's Agent Access panel. If you can't actually confirm a fix, call `release_error` instead of `resolve_error` — it's the free exit, not a lesser version of resolving.
+**Billing:** listing and queuing are always free. A small charge (current rate on [Pricing](https://owl24.dev/#pricing)) applies once, the moment `claim_error` succeeds on an item that's never been claimed before — not when it's later resolved. If you `release_error` instead of fixing it, or the claim simply expires, that charge isn't refunded, but re-claiming the same item later is never billed again. This is enforced up to a monthly cap on your account. `resolve_error` itself never adds a charge — use it once you actually have a fix, and use `release_error` (also free to call) when you don't, so the record stays accurate for whoever claims it next.
 
 We don't build, run, or host your agent. This server runs locally, on your machine, using your own project API key — same trust model as the REST workflow it wraps.
 
@@ -55,7 +55,7 @@ Add to your MCP settings (`Cursor Settings → MCP`):
 
 Any other MCP client: the same `command`/`args`/`env` shape works — `npx -y owl24-mcp` over stdio, with `OWL24_API_KEY` in the environment.
 
-Get your API key from a project's page on [the owl24 dashboard](https://owl24.dev/projects). Agent Access needs to be turned on for that project first (`Agent Access (Beta)` toggle) — every tool here 403s until it is.
+Get your API key from a project's page on [the owl24 dashboard](https://owl24.dev/projects). Agent Access needs to be turned on for that project first, via your account's own API — every tool here 403s until it is.
 
 ## Environment variables
 

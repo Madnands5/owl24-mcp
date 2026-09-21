@@ -111,9 +111,13 @@ export function createClient({ apiKey, baseUrl }) {
 
     /**
      * Claims one queue item (by its numeric id, from listQueue's `id`
-     * field). 409 means someone/something else already holds it - surfaced
-     * as an Owl24ApiError with status 409, not swallowed, so the caller can
-     * decide to move on to the next item rather than treat it as fatal.
+     * field). This is what triggers billing: the item's first-ever
+     * successful claim is billed once, immediately (see owl24 Pricing) - a
+     * later resolveError or releaseError never bills it again. 409 means
+     * someone/something else already holds it, 402 means the project's
+     * monthly cap is used up - both surfaced as an Owl24ApiError, not
+     * swallowed, so the caller can decide to move on rather than treat
+     * either as fatal.
      */
     claimError: async ({ id, claimedBy, serviceName }) => {
       if (!Number.isInteger(id)) throw new Error('id must be the queue item\'s numeric id');
@@ -165,7 +169,9 @@ export function createClient({ apiKey, baseUrl }) {
      * should name both the PR and the fingerprint it addresses - that's
      * what later makes "did this error actually stop happening?" checkable.
      * Resolving is an update, not a delete: the item stays as a permanent
-     * record of what was reviewed and when.
+     * record of what was reviewed and when. Free - the one charge a
+     * hand-off can incur already happened at its first claim (see
+     * claimError).
      */
     resolveError: async ({ id, resolutionNote, serviceName }) => {
       if (!Number.isInteger(id)) throw new Error('id must be the queue item\'s numeric id');
@@ -189,12 +195,12 @@ export function createClient({ apiKey, baseUrl }) {
     },
 
     /**
-     * Releases a claimed item back to open WITHOUT resolving it - the free
-     * exit when an agent can't actually find or fix the cause. This is not
-     * billed the way resolveError can be; use this instead of resolving
-     * something you didn't actually fix, so the item's own billing status
-     * stays accurate for whoever claims it next. `reason` is required by
-     * the server and is recorded in attempt_history.
+     * Releases a claimed item back to open WITHOUT resolving it - use this
+     * instead of resolving something you didn't actually fix. This never
+     * adds a charge on top of the claim; if that claim was billable, the
+     * charge isn't refunded either, but re-claiming the same item later is
+     * never billed again. `reason` is required by the server and is
+     * recorded in attempt_history.
      */
     releaseError: async ({ id, reason, serviceName }) => {
       if (!Number.isInteger(id)) throw new Error('id must be the queue item\'s numeric id');
