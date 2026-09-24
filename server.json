@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Madnands5/owl24-mcp",
+  "description": "MCP server for owl24 - gives coding agents direct access to your production error queue.",
+  "repository": {
+    "url": "https://github.com/Madnands5/owl24-mcp",
+    "source": "github"
+  },
+  "version": "0.2.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "owl24-mcp",
+      "version": "0.2.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "OWL24_API_KEY",
+          "description": "Your owl24 project API key, from that project's page on the owl24 dashboard. Agent Access must be enabled for the project first.",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "OWL24_API_BASE",
+          "description": "Overrides the API base URL, for local or self-hosted testing only. Production customers never need to set this.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

@@ -1,3 +1,5 @@
 node_modules/
 *.log
 .env
+mcp-publisher.exe
+mcp-publisher.tar.gz
