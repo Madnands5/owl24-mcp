@@ -1,6 +1,6 @@
 # owl24-mcp
 
-MCP server for [owl24](https://owl24.dev) — gives Claude Code, Cursor, or any [MCP](https://modelcontextprotocol.io)-speaking client direct access to your error queue. Ask "what's breaking in checkout" and get an answer, instead of writing a script against a REST API first.
+MCP server for [owl24](https://owl24.dev) — hand a production error to the coding agent you already use (Claude Code, Cursor, or any [MCP](https://modelcontextprotocol.io)-speaking client). It claims the item, reads the trace and stack trace, and writes the fix — instead of you reading a stack trace for a file you've never opened.
 
 This doesn't replace the [REST-plus-AGENTS.md](https://owl24.dev/docs#agent-integration) workflow — it's a thinner way to reach the exact same endpoints. If you already have an AGENTS.md-driven CI loop working, you don't need this. This is for working *with* your agent interactively, from inside your editor.
 

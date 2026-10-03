@@ -2,7 +2,7 @@
   "name": "owl24-mcp",
   "version": "0.2.2",
   "mcpName": "io.github.Madnands5/owl24-mcp",
-  "description": "MCP server for owl24 — gives Claude Code, Cursor, or any MCP client direct access to your error queue: list what's broken, claim it, read the trace, and resolve it, without leaving your editor.",
+  "description": "MCP server for owl24 — hand a production error to the coding agent you already use (Claude Code, Cursor, or any MCP client). It claims the item, reads the trace and stack trace, and writes the fix, without you leaving your editor.",
   "type": "module",
   "main": "index.js",
   "bin": {

@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Madnands5/owl24-mcp",
-  "description": "MCP server for owl24 - gives coding agents direct access to your production error queue.",
+  "description": "Hand a production error to the coding agent you already use — it claims it and writes the fix.",
   "repository": {
     "url": "https://github.com/Madnands5/owl24-mcp",
     "source": "github"
