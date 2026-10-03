@@ -1,0 +1,22 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - owl24ApiKey
+    properties:
+      owl24ApiKey:
+        type: string
+        description: Your owl24 project API key, from that project's page on the owl24 dashboard. Agent Access must be enabled for the project first.
+      owl24ApiBase:
+        type: string
+        description: Overrides the API base URL. For local or self-hosted testing only — production use never needs this.
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'owl24-mcp'],
+      env: Object.assign(
+        { OWL24_API_KEY: config.owl24ApiKey },
+        config.owl24ApiBase ? { OWL24_API_BASE: config.owl24ApiBase } : {}
+      )
+    })
